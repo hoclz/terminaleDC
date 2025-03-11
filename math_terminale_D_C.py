@@ -1,6 +1,41 @@
 import streamlit as st
 from datetime import datetime
 
+# ===========================================================
+# 1. AUTHENTICATION SETUP (PLACE THIS AT THE VERY TOP)
+# ===========================================================
+# Replace with your real usernames and passwords:
+VALID_USERS = {
+    "hoss": "hoss25",
+    "gild": "gild25"
+}
+
+# Simple session-based login check
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+def show_login():
+    """Displays a simple login form and sets logged_in to True if valid."""
+    st.title("Restricted Access - Please Log In")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Log In"):
+        if username in VALID_USERS and password == VALID_USERS[username]:
+            st.session_state.logged_in = True
+           
+        else:
+            st.error("Invalid username or password")
+
+# If not logged in, show the login form and stop execution here
+if not st.session_state.logged_in:
+    show_login()
+    st.stop()
+
+# ===========================================================
+# 2. MAIN WIZARD CODE (ONLY ACCESSIBLE IF LOGGED IN)
+# ===========================================================
+
 # ----------------------------
 # Données statiques pour Départements et Communes
 # ----------------------------
@@ -115,10 +150,12 @@ def step1():
                 available_exams.append(f"{year} - {exam}")
     if available_exams:
         st.subheader("Anciennes épreuves disponibles")
-        selected_old_exams = st.multiselect("Sélectionnez les épreuves à consulter ou télécharger",
-                                            available_exams,
-                                            default=st.session_state.form_data.get("selected_old_exams", []),
-                                            key="old_exams")
+        selected_old_exams = st.multiselect(
+            "Sélectionnez les épreuves à consulter ou télécharger",
+            available_exams,
+            default=st.session_state.form_data.get("selected_old_exams", []),
+            key="old_exams"
+        )
         save_data("selected_old_exams", selected_old_exams)
         for exam in selected_old_exams:
             st.download_button(
@@ -129,37 +166,62 @@ def step1():
             )
     else:
         st.info("Aucune ancienne épreuve disponible pour la période sélectionnée.")
-
+    
     st.markdown("---")
     
-    selected_depts = st.multiselect("Sélectionnez les Départements", departements,
-                                    default=st.session_state.form_data.get("departements", []),
-                                    key="departements")
+    selected_depts = st.multiselect(
+        "Sélectionnez les Départements",
+        departements,
+        default=st.session_state.form_data.get("departements", []),
+        key="departements"
+    )
     save_data("departements", selected_depts)
     
     st.subheader("Population par Département")
     for dept in selected_depts:
-        pop = st.number_input(f"Population pour {dept}", min_value=0, step=1000,
-                              value=st.session_state.pop_dept.get(dept, 0),
-                              key=f"pop_dept_{dept}")
+        pop = st.number_input(
+            f"Population pour {dept}",
+            min_value=0,
+            step=1000,
+            value=st.session_state.pop_dept.get(dept, 0),
+            key=f"pop_dept_{dept}"
+        )
         st.session_state.pop_dept[dept] = pop
     save_data("pop_dept", st.session_state.pop_dept)
     
-    selected_communes = st.multiselect("Sélectionnez les Communes", communes,
-                                       default=st.session_state.form_data.get("communes", []),
-                                       key="communes")
+    selected_communes = st.multiselect(
+        "Sélectionnez les Communes",
+        communes,
+        default=st.session_state.form_data.get("communes", []),
+        key="communes"
+    )
     save_data("communes", selected_communes)
     
     st.subheader("Population par Commune")
     for com in selected_communes:
-        pop = st.number_input(f"Population pour {com}", min_value=0, step=1000,
-                              value=st.session_state.pop_commune.get(com, 0),
-                              key=f"pop_commune_{com}")
+        pop = st.number_input(
+            f"Population pour {com}",
+            min_value=0,
+            step=1000,
+            value=st.session_state.pop_commune.get(com, 0),
+            key=f"pop_commune_{com}"
+        )
         st.session_state.pop_commune[com] = pop
     save_data("pop_commune", st.session_state.pop_commune)
     
-    date_examen = st.date_input("Date de l'examen", st.session_state.form_data.get("date_examen", datetime.today()), key="date_examen")
-    duree_examen = st.number_input("Durée de l'examen (en minutes)", min_value=30, max_value=300, value=240, step=10, key="duree_examen")
+    date_examen = st.date_input(
+        "Date de l'examen",
+        st.session_state.form_data.get("date_examen", datetime.today()),
+        key="date_examen"
+    )
+    duree_examen = st.number_input(
+        "Durée de l'examen (en minutes)",
+        min_value=30,
+        max_value=300,
+        value=240,
+        step=10,
+        key="duree_examen"
+    )
     save_data("date_examen", date_examen)
     save_data("duree_examen", duree_examen)
     
@@ -185,9 +247,12 @@ def step2():
         "Probabilités et statistiques",
         "Suites numériques"
     ]
-    selected_topics = st.multiselect("Choisissez les thèmes", topics,
-                                     default=st.session_state.form_data.get("selected_topics", []),
-                                     key="topics")
+    selected_topics = st.multiselect(
+        "Choisissez les thèmes",
+        topics,
+        default=st.session_state.form_data.get("selected_topics", []),
+        key="topics"
+    )
     save_data("selected_topics", selected_topics)
     
     col1, col2 = st.columns(2)
@@ -205,23 +270,33 @@ def step3():
     st.header("Étape 3 : Paramètres de l'examen")
     st.write("Définissez la structure de l'épreuve et ajoutez des informations spécifiques pour chaque exercice.")
     
-    nb_exercices = st.number_input("Nombre d'exercices dans l'examen", min_value=1, max_value=10,
-                                   value=3, step=1, help="Généralement, les examens du Bac en mathématiques comportent 3 exercices.",
-                                   key="nb_exercices")
+    nb_exercices = st.number_input(
+        "Nombre d'exercices dans l'examen",
+        min_value=1,
+        max_value=10,
+        value=3,
+        step=1,
+        help="Généralement, les examens du Bac en mathématiques comportent 3 exercices.",
+        key="nb_exercices"
+    )
     save_data("nb_exercices", nb_exercices)
     
-    exercice_type = st.radio("Type d'exercices",
-                             options=["Problème long (étape par étape)", "Exercice court"],
-                             index=0,
-                             key="exercice_type")
+    exercice_type = st.radio(
+        "Type d'exercices",
+        options=["Problème long (étape par étape)", "Exercice court"],
+        index=0,
+        key="exercice_type"
+    )
     save_data("exercice_type", exercice_type)
     
     st.markdown("### Informations complémentaires par exercice")
     # Branching: For each exercise, allow teacher to type details (text, formulas, etc.)
     for i in range(1, int(nb_exercices) + 1):
-        detail = st.text_area(f"Informations complémentaires pour l'exercice {i}",
-                              st.session_state.exercise_details.get(f"ex{i}", ""),
-                              key=f"exercise_detail_{i}")
+        detail = st.text_area(
+            f"Informations complémentaires pour l'exercice {i}",
+            st.session_state.exercise_details.get(f"ex{i}", ""),
+            key=f"exercise_detail_{i}"
+        )
         st.session_state.exercise_details[f"ex{i}"] = detail
     save_data("exercise_details", st.session_state.exercise_details)
     
@@ -244,7 +319,7 @@ def step4():
     )
     
     example_domains = st.multiselect(
-        "Sélectionnez un ou plusieurs domaines historiques d'actualité", 
+        "Sélectionnez un ou plusieurs domaines historiques d'actualité",
         options=[
             "Réformes éducatives et politiques",
             "Événements économiques ou sociaux",
@@ -265,10 +340,12 @@ def step4():
     )
     save_data("actualite", actualite)
     
-    periode = st.selectbox("Période d'actualité", 
-                           options=["6 derniers mois", "1 an", "Plusieurs années"],
-                           index=0,
-                           key="periode")
+    periode = st.selectbox(
+        "Période d'actualité",
+        options=["6 derniers mois", "1 an", "Plusieurs années"],
+        index=0,
+        key="periode"
+    )
     save_data("periode", periode)
     
     col1, col2 = st.columns(2)
@@ -353,7 +430,7 @@ elif st.session_state.step == 5:
 
 # ----------------------------
 # Permanent Chat Box (Fixed at the bottom)
-
+# ----------------------------
 chat_css = """
 <style>
 .fixed-chat {
@@ -367,29 +444,22 @@ chat_css = """
     border-top: 1px solid #ccc;
     z-index: 1000;
 }
-
-/* Container row for the text area and the button */
 .fixed-chat .chat-row {
     display: flex;
-    align-items: flex-start; /* top-alignment */
+    align-items: flex-start;
 }
-
-/* Text area styling */
 .fixed-chat textarea {
     width: 80%;
     height: 50px;
     margin-right: 10px;
     box-sizing: border-box;
 }
-
-/* Button styling */
 .fixed-chat button {
     height: 50px;
     box-sizing: border-box;
 }
 </style>
 """
-
 st.markdown(chat_css, unsafe_allow_html=True)
 
 chat_html = """
@@ -403,8 +473,4 @@ chat_html = """
 """
 st.markdown(chat_html, unsafe_allow_html=True)
 
-# This text is optional, just a note to confirm the box is displayed
 st.text("La boîte de dialogue permanente est fixée en bas de la page.")
-
-
-
